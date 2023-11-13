@@ -93,6 +93,12 @@ const userSchema = new Schema(
         ref: "review",
       },
     ],
+    provider: {
+      type: String,
+      default: "System",
+      enum: ["Google", "Facebook", "Apple", "System"],
+      required: true,
+    },
   },
   { timestamps: true }
 );

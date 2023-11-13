@@ -8,7 +8,6 @@ import bcrypt from "bcrypt";
 import { sendEmail } from "../../utils/nodemailer/sendEmail.js";
 
 // ----------------------------------------------------------- //
-// ------------------------- Register --------------------------- //
 const signup = catchError(async (req, res, next) => {
   const { name, email, password, repeat_password, phone, gender } = req.body;
 
@@ -53,6 +52,7 @@ const signup = catchError(async (req, res, next) => {
     password,
     phone,
     gender,
+    provider: "System",
   });
   return res.status(201).json({
     message:
@@ -61,6 +61,7 @@ const signup = catchError(async (req, res, next) => {
   });
 });
 
+// ----------------------------------------------------------- //
 const activateAccount = catchError(async (req, res, next) => {
   const { token } = req.params;
 
@@ -121,6 +122,7 @@ const activateAccount = catchError(async (req, res, next) => {
   });
 });
 
+// ----------------------------------------------------------- //
 const newConfirmEmail = catchError(async (req, res, next) => {
   const { token } = req.params;
 
@@ -184,8 +186,6 @@ const newConfirmEmail = catchError(async (req, res, next) => {
 });
 
 // ----------------------------------------------------------- //
-// ------------------------- Login --------------------------- //
-
 const login = catchError(async (req, res, next) => {
   const { email, password } = req.body;
 
@@ -249,9 +249,101 @@ const login = catchError(async (req, res, next) => {
   res.status(201).json({ message: "Welcome", token, refreshToken });
 });
 
+// ---------------------------------------------------------- //
+// --------------------- Social Login ----------------------- //
+export const loginWithGmail = async (req, res, next) => {
+  const client = new OAuth2Client();
+  async function verify() {
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    return payload;
+  }
+  const { email_verified, email, given_name, family_name, picture } =
+    await verify();
+
+  if (!email_verified) {
+    return next(new Error("Email is not verified", { cause: 400 }));
+  }
+
+  const user = await userModel.findOne({ email });
+  if (user) {
+    if (user.provider !== "Google") {
+      return next(new Error("Provider is not GOOGLE", { cause: 400 }));
+    }
+
+    if (user.avoidMultipleLogIns) {
+      return next(
+        new Error("You can't make multiple login attempts within 1 minute", {
+          cause: 400,
+        })
+      );
+    }
+
+    await userModel.updateOne({ _id: user._id }, { avoidMultipleLogIns: true });
+
+    setTimeout(async () => {
+      await userModel.updateOne(
+        { _id: user._id },
+        { avoidMultipleLogIns: false }
+      );
+    }, 1000 * 60);
+
+    const Token = signToken({
+      payload: { _id: user._id },
+      signature: process.env.LOGIN_SIGNATURE,
+      expiresIn: "1d",
+    });
+
+    const loginToken = await tokenModel.findOneAndUpdate(
+      { user_id: user._id },
+      {
+        $push: {
+          loginToken: Token,
+        },
+      }
+    );
+
+    if (!loginToken) {
+      return next(new Error("Failed to login!!", { cause: 500 }));
+    }
+
+    return res
+      .status(200)
+      .json({ message: "Logged in successfully ", token: Token });
+  }
+
+  //Sign up user if user is not found
+  const userObject = {
+    email,
+    userName: `${given_name}_${family_name}`,
+    password: nanoid(10),
+    profileImage: {
+      secure_url: picture,
+      public_id: "",
+    },
+    provider: "GOOGLE",
+    phoneNumber: "No phone number yet",
+    isConfirmed: true,
+  };
+  const newUser = new userModel(userObject);
+  const savedUser = await newUser.save();
+  await tokenModel.create({
+    user_id: savedUser._id,
+  });
+  return res.status(200).json({
+    message: "Signed up successfully.",
+    user: {
+      email: savedUser.email,
+      userName: savedUser.userName,
+    },
+  });
+};
+
 // ----------------------------------------------------------- //
 // --------------------- Authentication ---------------------- //
-
 const protectedRoutes = catchError(async (req, res, next) => {
   let { token } = req.headers;
   if (!token) return next(new AppError("Invalid Token"), 401);

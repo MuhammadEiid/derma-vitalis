@@ -55,6 +55,9 @@ const getAllAppointments = catchError(async (req, res, next) => {
     "name -_id"
   );
 
+  let response = {};
+  response["Appointments"] = appointments;
+
   if (appointments.length > 0) {
     const formattedAppointments = appointments.map((appointment) => {
       const { _id, doctor, description, patient, appointmentSchedule, status } =
@@ -70,8 +73,9 @@ const getAllAppointments = catchError(async (req, res, next) => {
     });
 
     res.status(200).json({
+      message: "Success",
       page: apiFeatures.page,
-      appointments: formattedAppointments,
+      response: { Appointments: formattedAppointments },
     });
   } else {
     return next(new AppError("Appointments empty", 400));
