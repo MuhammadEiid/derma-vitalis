@@ -7,6 +7,10 @@ import {
 } from "../Authentication/authController.js";
 import { validate } from "../../middleware/validate.js";
 import { changePasswordValidation } from "../user/userValidation.js";
+import {
+  availableScheduleSchema,
+  workingHoursSchema,
+} from "./doctorValidation.js";
 
 const doctorRouter = express.Router();
 
@@ -22,13 +26,14 @@ doctorRouter
 
 doctorRouter.put(
   "/changePassword",
+  validate(changePasswordValidation),
   protectedRoutes,
   allowedTo("doctor"),
-  validate(changePasswordValidation),
   doctor.changePassword
 );
 doctorRouter.put(
   "/availableSlots",
+  validate(availableScheduleSchema),
   protectedRoutes,
   allowedTo("doctor"),
   doctor.addAvailableSlot
@@ -42,6 +47,7 @@ doctorRouter.patch("/logout", protectedRoutes, doctor.logout);
 
 doctorRouter.put(
   "/workingHours",
+  validate(workingHoursSchema),
   protectedRoutes,
   allowedTo("doctor"),
   doctor.workingHours

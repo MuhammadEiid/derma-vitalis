@@ -1,10 +1,13 @@
 import express from "express";
 import * as service from "./Service.Controller.js";
+import { validate } from "../../middleware/validate.js";
+
 import {
   allowedTo,
   protectedRoutes,
 } from "../Authentication/authController.js";
 import { uploadSingleFile } from "../../File Upload/multer.js";
+import { checkID } from "../user/userValidation.js";
 
 const serviceRouter = express.Router();
 
@@ -20,12 +23,18 @@ serviceRouter
 serviceRouter
   .route("/:id")
   .put(
+    validate(checkID),
     protectedRoutes,
     allowedTo("admin"),
     uploadSingleFile("imageCover", "services"),
     service.updateService
   )
-  .delete(protectedRoutes, allowedTo("admin"), service.deleteService)
-  .get(service.getService);
+  .delete(
+    validate(checkID),
+    protectedRoutes,
+    allowedTo("admin"),
+    service.deleteService
+  )
+  .get(validate(checkID), service.getService);
 
 export default serviceRouter;

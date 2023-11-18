@@ -4,6 +4,8 @@ import {
   allowedTo,
   protectedRoutes,
 } from "../Authentication/authController.js";
+import { validate } from "../../middleware/validate.js";
+import { checkID } from "../user/userValidation.js";
 
 const reviewRouter = express.Router();
 
@@ -13,8 +15,18 @@ reviewRouter
   .get(review.getAllReviews);
 reviewRouter
   .route("/:id")
-  .put(protectedRoutes, allowedTo("user"), review.updateReview)
-  .delete(protectedRoutes, allowedTo("user"), review.deleteReview)
-  .get(review.getReview);
+  .put(
+    validate(checkID),
+    protectedRoutes,
+    allowedTo("user"),
+    review.updateReview
+  )
+  .delete(
+    validate(checkID),
+    protectedRoutes,
+    allowedTo("user"),
+    review.deleteReview
+  )
+  .get(validate(checkID), review.getReview);
 
 export default reviewRouter;

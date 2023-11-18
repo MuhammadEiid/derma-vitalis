@@ -14,28 +14,10 @@ const addOne = (model, type, role) => {
       return next(new AppError("This email already exists", 400));
     }
 
-    if (!name || (!name.en && !name.ar)) {
-      return next(
-        new AppError("Please provide a name in English or Arabic", 400)
-      );
-    }
-
-    if (name.en && name.ar) {
-      return next(
-        new AppError(
-          "Please provide a name in either English or Arabic, not both",
-          400
-        )
-      );
-    }
-
     // If User Added Profile Picture
     if (req.file) {
       req.body.profilePic = req.file.profilePic;
     }
-    // To set User Active Status to False if the admin adds a new user
-    // to make the user login first before making any changes
-    req.body.isActive = false;
 
     if (role === "admin" || role === "doctor") {
       req.body.verified = true;

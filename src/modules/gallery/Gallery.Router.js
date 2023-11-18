@@ -5,6 +5,8 @@ import {
   protectedRoutes,
 } from "../Authentication/authController.js";
 import { uploadSingleFile } from "../../File Upload/multer.js";
+import { validate } from "../../middleware/validate.js";
+import { checkID } from "../user/userValidation.js";
 
 const galleryRouter = express.Router();
 
@@ -25,12 +27,12 @@ galleryRouter
   );
 
 galleryRouter
-  .route("/video/:videoId")
-  .put(protectedRoutes, gallery.deleteVideo);
+  .route("/video/:id")
+  .put(validate(checkID), protectedRoutes, gallery.deleteVideo);
 
 galleryRouter
-  .route("/image/:imageId")
-  .put(protectedRoutes, gallery.deleteImage);
+  .route("/image/:id")
+  .put(validate(checkID), protectedRoutes, gallery.deleteImage);
 
 galleryRouter.route("/images").delete(protectedRoutes, gallery.deleteAllImages);
 

@@ -97,7 +97,7 @@ const deleteAllVideos = catchError(async (req, res, next) => {
 
 // Delete specific image
 const deleteImage = catchError(async (req, res, next) => {
-  const { imageId } = req.params;
+  const { id } = req.params;
 
   const gallery = await galleryModel.findOne({});
 
@@ -105,9 +105,7 @@ const deleteImage = catchError(async (req, res, next) => {
     return next(new AppError("Something went wrong!", 404));
   }
 
-  const image = gallery.images.find(
-    (image) => image._id.toString() === imageId
-  );
+  const image = gallery.images.find((image) => image._id.toString() === id);
 
   if (!image) {
     return next(new AppError("Image not found", 404));
@@ -115,7 +113,7 @@ const deleteImage = catchError(async (req, res, next) => {
 
   await galleryModel.findOneAndUpdate(
     {},
-    { $pull: { images: { _id: imageId } } },
+    { $pull: { images: { _id: id } } },
     { new: true }
   );
 
@@ -124,7 +122,7 @@ const deleteImage = catchError(async (req, res, next) => {
 
 // Delete specific video
 const deleteVideo = catchError(async (req, res, next) => {
-  const { videoId } = req.params;
+  const { id } = req.params;
 
   const gallery = await galleryModel.findOne({});
 
@@ -132,9 +130,7 @@ const deleteVideo = catchError(async (req, res, next) => {
     return next(new AppError("Something went wrong!", 404));
   }
 
-  const video = gallery.videos.find(
-    (video) => video._id.toString() === videoId
-  );
+  const video = gallery.videos.find((video) => video._id.toString() === id);
 
   if (!video) {
     return next(new AppError("Video not found", 404));
@@ -142,7 +138,7 @@ const deleteVideo = catchError(async (req, res, next) => {
 
   const updatedGallery = await galleryModel.findOneAndUpdate(
     {},
-    { $pull: { videos: { _id: videoId } } },
+    { $pull: { videos: { _id: id } } },
     { new: true }
   );
 

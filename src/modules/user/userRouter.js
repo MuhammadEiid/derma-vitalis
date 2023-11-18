@@ -1,7 +1,7 @@
 import express from "express";
 import * as user from "./userController.js";
 import { validate } from "../../middleware/validate.js";
-import { changePasswordValidation } from "./userValidation.js";
+import { changePasswordValidation, checkID } from "./userValidation.js";
 import {
   allowedTo,
   protectedRoutes,
@@ -23,18 +23,20 @@ userRouter
 userRouter.put(
   "/changePassword",
   protectedRoutes,
-  allowedTo("user"),
   validate(changePasswordValidation),
+  allowedTo("user"),
   user.changePassword
 );
 userRouter.put(
-  "/toggleLike/:blogId",
+  "/toggleLike/:id",
+  validate(checkID),
   protectedRoutes,
   allowedTo("user"),
   user.toggleLikeDislikeBlog
 );
 userRouter.put(
-  "/toggleSave/:blogId",
+  "/toggleSave/:id",
+  validate(checkID),
   protectedRoutes,
   allowedTo("user"),
   user.toggleSaveUnsaveBlog

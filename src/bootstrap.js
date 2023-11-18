@@ -3,6 +3,7 @@ import appointmentRouter from "./modules/Appointment/appointmentRouter.js";
 import authRouter from "./modules/Authentication/authRouter.js";
 import adminRouter from "./modules/admin/adminRouter.js";
 import blogRouter from "./modules/blog/Blog.Router.js";
+import contactRouter from "./modules/contact/Contact.Router.js";
 import doctorRouter from "./modules/doctor/doctorRouter.js";
 import galleryRouter from "./modules/gallery/Gallery.Router.js";
 import reviewRouter from "./modules/review/reviewRouter.js";
@@ -20,6 +21,7 @@ export function bootstrap(app) {
   app.use("/appointment", appointmentRouter);
   app.use("/gallery", galleryRouter);
   app.use("/service", serviceRouter);
+  app.use("/contact", contactRouter);
 
   app.all("*", (req, res, next) => {
     next(new AppError("Endpoint not found", 404));

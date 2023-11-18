@@ -7,19 +7,22 @@ import * as handler from "../controllersHandler.js";
 const addService = catchError(async (req, res, next) => {
   const { title, description } = req.body;
 
+  if (!req.body.imageCover) {
+    return next(new AppError("Please provide valid image", 400));
+  }
   req.body.imageCover = req.file.filename;
 
-  if (!title || (!title.en && !title.ar)) {
-    return next(
-      new AppError("Please provide a title in English or Arabic", 400)
-    );
-  }
+  // if (!title || (!title.en && !title.ar)) {
+  //   return next(
+  //     new AppError("Please provide a title in English or Arabic", 400)
+  //   );
+  // }
 
-  if (!description || (!description.en && !description.ar)) {
-    return next(
-      new AppError("Please provide a description in English or Arabic", 400)
-    );
-  }
+  // if (!description || (!description.en && !description.ar)) {
+  //   return next(
+  //     new AppError("Please provide a description in English or Arabic", 400)
+  //   );
+  // }
 
   const service = new serviceModel(req.body);
   if (!service) {

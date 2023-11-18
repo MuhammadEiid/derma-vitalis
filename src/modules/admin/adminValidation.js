@@ -1,14 +1,27 @@
 import Joi from "joi";
 
 const idValidation = Joi.string().hex().length(24).required();
-const pwalidation = Joi.string()
-  .pattern(new RegExp("^[a-zA-Z0-9]{5,30}$"))
+
+const passwordValidationPattern = /^[a-zA-Z0-9]{5,30}$/;
+
+const pwValidation = Joi.string()
+  .pattern(passwordValidationPattern)
   .required()
   .min(5)
   .max(30);
 
+const changePasswordToOthers = Joi.object({
+  id: idValidation,
+  newPassword: pwValidation,
+});
+
+const nameSchema = Joi.object({
+  en: Joi.string(),
+  ar: Joi.string(),
+}).or("en", "ar");
+
 const addUser = Joi.object({
-  name: Joi.string().min(3).max(30).required(),
+  name: nameSchema.required(),
   email: Joi.string()
     .required()
     .email({
@@ -16,23 +29,35 @@ const addUser = Joi.object({
       tlds: { allow: ["com", "net"] },
     }),
   gender: Joi.string().valid("male", "female").required(),
-  bloodType: Joi.string()
-    .valid("A+", "B+", "AB+", "O+", "A-", "B-", "AB-", "O-")
-    .required(),
-
   phone: Joi.string()
-    .length(11)
-    .pattern(/^[0-9]+$/)
-    .required(),
-  medicalHistory: Joi.string().min(3).max(250).required(),
-  password: pwalidation,
+    .required()
+    .pattern(/^[+0-9\s.-]+$/)
+    .min(8)
+    .max(15),
+  password: pwValidation,
+  role: Joi.string().valid("user", "admin"),
+});
+
+const changeRole = Joi.object({
+  role: Joi.string().valid("user", "admin").required(),
+  id: idValidation,
+});
+
+const checkID = Joi.object({
+  id: idValidation,
 });
 
 const changePasswordValidation = Joi.object({
-  oldPassword: pwalidation,
+  oldPassword: pwValidation,
   repeat_password: Joi.ref("newPassword"),
-  newPassword: pwalidation,
+  newPassword: pwValidation,
   id: idValidation,
 }).with("newPassword", "repeat_password");
 
-export { changePasswordValidation, addUser };
+export {
+  changePasswordValidation,
+  addUser,
+  changePasswordToOthers,
+  changeRole,
+  checkID,
+};

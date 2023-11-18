@@ -7,12 +7,19 @@ import {
 } from "../Authentication/authController.js";
 import { uploadSingleFile } from "../../File Upload/multer.js";
 import { changePasswordValidation } from "../user/userValidation.js";
+import {
+  addUser,
+  changePasswordToOthers,
+  changeRole,
+  checkID,
+} from "./adminValidation.js";
 
 const adminRouter = express.Router();
 // Add (Admin, Doctor, Patient)
 adminRouter.post(
   "/addAdmin",
   protectedRoutes,
+  validate(addUser),
   allowedTo("admin"),
   uploadSingleFile("profilePic", "admins"),
   admin.addAdmin
@@ -21,6 +28,7 @@ adminRouter.post(
 adminRouter.post(
   "/addDoctor",
   protectedRoutes,
+  validate(addUser),
   allowedTo("admin"),
   uploadSingleFile("profilePic", "doctors"),
   admin.addDoctor
@@ -29,6 +37,7 @@ adminRouter.post(
 adminRouter.post(
   "/addUser",
   protectedRoutes,
+  validate(addUser),
   allowedTo("admin"),
   uploadSingleFile("profilePic", "patients"),
   admin.addUser
@@ -57,10 +66,11 @@ adminRouter.get(
 // Get Specific (Admin, Doctor, Patient)
 adminRouter.get(
   "/getUser/:id",
+  validate(checkID),
   protectedRoutes,
-  allowedTo("admin"),
   admin.getUser
 );
+
 adminRouter.get(
   "/profile",
   protectedRoutes,
@@ -70,17 +80,13 @@ adminRouter.get(
 
 adminRouter.get(
   "/getAdmin/:id",
+  validate(checkID),
   protectedRoutes,
   allowedTo("admin"),
   admin.getAdmin
 );
 
-adminRouter.get(
-  "/getDoctor/:id",
-  protectedRoutes,
-  allowedTo("admin"),
-  admin.getDoctor
-);
+adminRouter.get("/getDoctor/:id", validate(checkID), admin.getDoctor);
 
 // Get all appointments
 adminRouter.get(
@@ -94,6 +100,7 @@ adminRouter.get(
 adminRouter.delete(
   "/deleteUser/:id",
   protectedRoutes,
+  validate(checkID),
   allowedTo("admin"),
   admin.deleteUser
 );
@@ -102,14 +109,16 @@ adminRouter.delete(
 adminRouter.delete(
   "/deleteAdmin/:id",
   protectedRoutes,
+  validate(checkID),
   allowedTo("admin"),
   admin.deleteUser
 );
 
 // Delete Review
 adminRouter.delete(
-  "/deleteReview/:id",
+  "/review/:id",
   protectedRoutes,
+  validate(checkID),
   allowedTo("admin"),
   admin.deleteReview
 );
@@ -118,6 +127,7 @@ adminRouter.delete(
 adminRouter.delete(
   "/deleteDoctor/:id",
   protectedRoutes,
+  validate(checkID),
   allowedTo("admin"),
   admin.deleteDoctor
 );
@@ -129,6 +139,15 @@ adminRouter.put(
   allowedTo("admin"),
   uploadSingleFile("profilePic", "admins"),
   admin.updateAdminProfile
+);
+
+// Change user role to admin
+adminRouter.put(
+  "/changeRole/:id",
+  protectedRoutes,
+  validate(changeRole),
+  allowedTo("admin"),
+  admin.changeRole
 );
 
 // Change password
@@ -144,6 +163,7 @@ adminRouter.put(
 adminRouter.patch(
   "/changeAdminPassword/:id",
   protectedRoutes,
+  validate(changePasswordToOthers),
   allowedTo("admin"),
   admin.changeAdminPassword
 );
@@ -151,6 +171,7 @@ adminRouter.patch(
 adminRouter.patch(
   "/changeDoctorPassword/:id",
   protectedRoutes,
+  validate(changePasswordToOthers),
   allowedTo("admin"),
   admin.changeDoctorPassword
 );
@@ -158,6 +179,7 @@ adminRouter.patch(
 adminRouter.patch(
   "/changeUserPassword/:id",
   protectedRoutes,
+  validate(changePasswordToOthers),
   allowedTo("admin"),
   admin.changeUserPassword
 );

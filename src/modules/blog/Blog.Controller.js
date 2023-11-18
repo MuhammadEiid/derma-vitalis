@@ -12,39 +12,6 @@ const addBlog = catchError(async (req, res, next) => {
     req.body.imageCover = req.file.filename;
   }
 
-  if (req.body.title) {
-    if (!title || (!title.en && !title.ar)) {
-      return next(
-        new AppError("Please provide a title in English or Arabic", 400)
-      );
-    }
-
-    if (title.en && title.ar) {
-      return next(
-        new AppError(
-          "Please provide a title in either English or Arabic, not both",
-          400
-        )
-      );
-    }
-  }
-  if (req.body.description) {
-    if (!description || (!description.en && !description.ar)) {
-      return next(
-        new AppError("Please provide a description in English or Arabic", 400)
-      );
-    }
-
-    if (description.en && description.ar) {
-      return next(
-        new AppError(
-          "Please provide a description in either English or Arabic, not both",
-          400
-        )
-      );
-    }
-  }
-
   const blog = new blogModel({
     ...req.body,
     doctor: req.user._id,
@@ -70,37 +37,6 @@ const updateBlog = catchError(async (req, res, next) => {
   const { title, description } = req.body;
   const { id } = req.params;
 
-  if (title) {
-    if (!title || (!title.en && !title.ar)) {
-      return next(
-        new AppError("Please provide a title in English or Arabic", 400)
-      );
-    }
-    if (title.en && title.ar) {
-      return next(
-        new AppError(
-          "Please provide a title in either English or Arabic, not both",
-          400
-        )
-      );
-    }
-  }
-  if (description) {
-    if (!description || (!description.en && !description.ar)) {
-      return next(
-        new AppError("Please provide a description in English or Arabic", 400)
-      );
-    }
-
-    if (description.en && description.ar) {
-      return next(
-        new AppError(
-          "Please provide a description in either English or Arabic, not both",
-          400
-        )
-      );
-    }
-  }
   if (req.file) {
     req.body.imageCover = req.file.filename;
   }

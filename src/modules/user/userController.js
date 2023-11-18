@@ -2,9 +2,6 @@ import { userModel } from "../../../Database/models/User.model.js";
 import { AppError } from "../../utils/AppError.js";
 import { catchError } from "../../utils/catchError.js";
 import * as handler from "../controllersHandler.js";
-import bcrypt from "bcrypt";
-
-// Add Doctor or Patient or Admin
 
 const getUserProfile = handler.getUserProfile(userModel, "Patient");
 const updatePatient = handler.updateProfile(userModel, "Patient");

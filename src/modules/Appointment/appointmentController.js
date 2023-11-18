@@ -140,7 +140,7 @@ const cancelAppointment = catchError(async (req, res, next) => {
   }
   await doctor.save();
 
-  const patient = await userModel.findOne({ _id: appointment.patient });
+  const patient = await userModel.findById({ _id: appointment.patient });
 
   if (!patient) {
     return next(new AppError("Patient not found", 404));
@@ -209,7 +209,7 @@ const completeAppointment = catchError(async (req, res, next) => {
     }
   }
 
-  const patient = await userModel.findOne({ _id: appointment.patient });
+  const patient = await userModel.findById({ _id: appointment.patient });
 
   if (!patient) {
     return next(new AppError("Patient not found", 404));
@@ -229,14 +229,6 @@ const completeAppointment = catchError(async (req, res, next) => {
 
 // Common error messages
 
-const descriptionError = new AppError(
-  "Please provide a description in English or Arabic",
-  400
-);
-const descriptionConflictError = new AppError(
-  "Please provide a description in either English or Arabic, not both",
-  400
-);
 const noDoctorError = new AppError(
   "No available schedule for this doctor",
   400
@@ -249,10 +241,7 @@ const appointmentExistsError = new AppError(
   "You already have an appointment at this time",
   400
 );
-const pendingAppointmentError = new AppError(
-  "Your request is in pending status and waiting for the doctor approval",
-  409
-);
+
 const cancelledAppointmentError = new AppError(
   "Unfortunately the appointment is cancelled ",
   400

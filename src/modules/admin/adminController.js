@@ -82,6 +82,24 @@ const getAllAppointments = catchError(async (req, res, next) => {
   }
 });
 
+const changeRole = async (req, res, next) => {
+  const { id } = req.params;
+  const { role } = req.body;
+  const user = await userModel.updateOne(
+    { _id: id, role: { $ne: "admin" } },
+    { role },
+    { new: true }
+  );
+  if (!user.modifiedCount) {
+    return next(
+      new AppError(`User is not found or role can't be changed !`, 400)
+    );
+  }
+  return res
+    .status(200)
+    .json({ message: "Role has been updated successfully !" });
+};
+
 export {
   addUser,
   getAllUsers,
@@ -103,4 +121,5 @@ export {
   getAdminProfile,
   deleteReview,
   getAllAppointments,
+  changeRole,
 };

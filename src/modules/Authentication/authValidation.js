@@ -1,9 +1,24 @@
 import Joi from "joi";
 
-const idValidation = Joi.string().hex().length(24).required();
+const passwordValidationPattern = /^[a-zA-Z0-9]{5,30}$/;
+
+const pwValidation = Joi.string()
+  .pattern(passwordValidationPattern)
+  .required()
+  .min(5)
+  .max(30);
+
+const nameSchema = Joi.object({
+  en: Joi.string(),
+  ar: Joi.string(),
+}).or("en", "ar");
+
+const passwordRepeatValidation = Joi.string()
+  .valid(Joi.ref("password"))
+  .required();
 
 const registerSchema = Joi.object({
-  name: Joi.string().min(3).max(30).required(),
+  name: nameSchema.required(),
   email: Joi.string().email({
     minDomainSegments: 2,
     tlds: { allow: ["com", "net"] },
@@ -13,12 +28,8 @@ const registerSchema = Joi.object({
     .length(11)
     .pattern(/^[0-9]+$/)
     .required(),
-  password: Joi.string()
-    .min(5)
-    .max(30)
-    .pattern(new RegExp("^[a-zA-Z0-9]{5,30}$"))
-    .required(),
-  repeat_password: Joi.string().valid(Joi.ref("password")).required(),
+  password: pwValidation,
+  repeat_password: passwordRepeatValidation,
 });
 
 const loginSchema = Joi.object({
@@ -26,11 +37,7 @@ const loginSchema = Joi.object({
     minDomainSegments: 2,
     tlds: { allow: ["com", "net"] },
   }),
-  password: Joi.string()
-    .min(5)
-    .max(30)
-    .pattern(new RegExp("^[a-zA-Z0-9]{5,30}$"))
-    .required(),
+  password: pwValidation,
 });
 
 export { registerSchema, loginSchema };
