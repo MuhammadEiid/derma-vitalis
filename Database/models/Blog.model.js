@@ -5,28 +5,42 @@ const blogSchema = new Schema(
     title: {
       en: {
         type: String,
-        trim: true,
         min: 3,
       },
       ar: {
         type: String,
-        trim: true,
         min: 3,
       },
     },
 
-    description: {
-      en: {
-        type: String,
-        trim: true,
-        min: 3,
+    section: [
+      {
+        title: {
+          en: {
+            type: String,
+            trim: true,
+            min: 3,
+          },
+          ar: {
+            type: String,
+            trim: true,
+            min: 3,
+          },
+        },
+        content: {
+          en: {
+            type: String,
+            trim: true,
+            min: 3,
+          },
+          ar: {
+            type: String,
+            trim: true,
+            min: 3,
+          },
+        },
       },
-      ar: {
-        type: String,
-        trim: true,
-        min: 3,
-      },
-    },
+    ],
 
     doctor: {
       type: Schema.ObjectId,

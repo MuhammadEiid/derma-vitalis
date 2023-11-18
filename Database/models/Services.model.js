@@ -28,6 +28,35 @@ const serviceSchema = new Schema(
       },
     },
 
+    section: [
+      {
+        title: {
+          en: {
+            type: String,
+            trim: true,
+            min: 3,
+          },
+          ar: {
+            type: String,
+            trim: true,
+            min: 3,
+          },
+        },
+        content: {
+          en: {
+            type: String,
+            trim: true,
+            min: 3,
+          },
+          ar: {
+            type: String,
+            trim: true,
+            min: 3,
+          },
+        },
+      },
+    ],
+
     createdAt: {
       type: Date,
       default: Date.now,

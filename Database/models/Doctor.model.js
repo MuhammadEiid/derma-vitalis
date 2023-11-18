@@ -29,7 +29,7 @@ const doctorSchema = new Schema(
 
     phone: { type: String },
 
-    gender: { type: String, required: true, enum: ["male", "female", "other"] },
+    gender: { type: String, required: true, enum: ["male", "female"] },
 
     isActive: { type: Boolean, default: "false" },
 
@@ -200,13 +200,6 @@ doctorSchema.pre("save", function (next) {
   this.password = bcrypt.hashSync(this.password, parseInt(process.env.SALT));
   next();
 });
-
-// doctorSchema.pre(/^find/, function () {
-//   this.populate("createdBy", "name role email -_id").populate(
-//     "user",
-//     "name role email"
-//   );
-// });
 
 doctorSchema.pre("findOneAndUpdate", function () {
   // Hash doctor Password in Update

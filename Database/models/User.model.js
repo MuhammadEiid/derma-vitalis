@@ -26,8 +26,8 @@ const userSchema = new Schema(
       lowercase: true,
     },
     password: { type: String, min: 5, max: 30, required: true },
-    gender: { type: String, required: true, enum: ["male", "female", "other"] },
-    phone: { type: String, required: true },
+    gender: { type: String, required: true, enum: ["male", "female"] },
+    phone: { type: String },
     DOB: { type: Date },
 
     address: [
@@ -58,10 +58,10 @@ const userSchema = new Schema(
       default: "user",
     },
 
-    isActive: { type: Boolean, default: "false" },
+    isActive: { type: Boolean, default: false },
     verified: {
       type: Boolean,
-      default: "false",
+      default: false,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -69,7 +69,7 @@ const userSchema = new Schema(
     },
     isBlocked: {
       type: Boolean,
-      default: "false",
+      default: false,
     },
 
     passwordChangedAt: Date,
@@ -99,6 +99,12 @@ const userSchema = new Schema(
       enum: ["Google", "Facebook", "Apple", "System"],
       required: true,
     },
+    contactForm: [
+      {
+        type: Schema.ObjectId,
+        ref: "contact",
+      },
+    ],
   },
   { timestamps: true }
 );
@@ -129,6 +135,10 @@ userSchema.post("init", function () {
       this.profilePic = process.env.BaseURL + "patients/" + this.profilePic;
     }
   }
+});
+
+userSchema.pre(/^find/, function () {
+  this.populate("contactForm", "message -_id");
 });
 
 export const userModel = mongoose.models.user || model("user", userSchema);

@@ -45,8 +45,5 @@ const appointmentSchema = new Schema(
   { timestamps: true }
 );
 
-appointmentSchema.pre(/^find/, function () {
-  this.populate("patient", "name -_id");
-});
 export const appointmentModel =
   mongoose.models.appointment || model("appointment", appointmentSchema);
