@@ -1,5 +1,5 @@
 <h1 align="center">
-  Derma Vitalis
+  Clinic Appointment System
 </h1>
   
 ## Technologies 🚀
