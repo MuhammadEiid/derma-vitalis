@@ -5,10 +5,25 @@ const blogSchema = new Schema(
     title: {
       en: {
         type: String,
+        required: true,
         min: 3,
       },
       ar: {
         type: String,
+        required: true,
+        min: 3,
+      },
+    },
+
+    description: {
+      en: {
+        type: String,
+        required: true,
+        min: 3,
+      },
+      ar: {
+        type: String,
+        required: true,
         min: 3,
       },
     },
@@ -18,24 +33,24 @@ const blogSchema = new Schema(
         title: {
           en: {
             type: String,
-            trim: true,
+            required: true,
             min: 3,
           },
           ar: {
             type: String,
-            trim: true,
+            required: true,
             min: 3,
           },
         },
         content: {
           en: {
             type: String,
-            trim: true,
+            required: true,
             min: 3,
           },
           ar: {
             type: String,
-            trim: true,
+            required: true,
             min: 3,
           },
         },

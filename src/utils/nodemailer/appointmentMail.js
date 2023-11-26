@@ -1,12 +1,17 @@
-export const resetPasswordHTML = (userName, resetLink) => {
+export const appointmentMail = (
+  patientName,
+  doctorName,
+  day,
+  startTime,
+  endTime
+) => {
   return `<!DOCTYPE html>
   <html lang="en">
   
   <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Password Reset</title>
-      
+      <title>Appointment Confirmation</title>
       <style>
       body, html {
         margin: 0;
@@ -81,18 +86,20 @@ export const resetPasswordHTML = (userName, resetLink) => {
           <div class="header">
               <!-- Replace the image logo with text -->
               <div class="logo" style="text-align: center; font-size: 24px; font-weight: bold; color: #c49615; margin-bottom: 10px;">
-                  <span>Derma Vitalis</span>
-              </div>
-              <h2 style="color: #c49615;">Password Reset</h2>
+              <span>Derma Vitalis</span>
+          </div>
+              <h2 style="color: #c49615;">Appointment Confirmation</h2>
           </div>
           <div class="content">
-              <p style="color: #091e2b;">Dear ${userName},</p>
-              <p style="color: #091e2b;">You have requested a password reset. Please click the button below to reset your password:</p>
-              <div style="text-align: center;">
-                  <a href="${resetLink}" class="button" style="color: #fafafa;">Reset Password</a>
-              </div>
-              <br>
-              <p style="color: #091e2b;">If you did not request a password reset, please ignore this email.</p>
+              <p style="color: #091e2b;">Dear ${patientName},</p>
+              <p style="color: #091e2b;">Welcome to Derma Vitalis! Your appointment has been approved. Details are as follows:</p>
+              <ul style="color: #091e2b;">
+                  <li><strong>Doctor:</strong> ${doctorName}</li>
+                  <li><strong>Date:</strong> ${day}</li>
+                  <li><strong>Time:</strong> ${startTime} : ${endTime}</li>
+              </ul>
+              <p style="color: #091e2b;">Thank you for choosing our services. If you have any questions, feel free to
+                  contact us.</p>
           </div>
           <div class="footer">
               <p>This is an automated message. Please do not reply.</p>

@@ -1,3 +1,4 @@
+import Joi from "joi";
 import mongoose, { Schema, model } from "mongoose";
 
 const serviceSchema = new Schema(
@@ -5,12 +6,12 @@ const serviceSchema = new Schema(
     title: {
       en: {
         type: String,
-        trim: true,
+        required: true,
         min: 3,
       },
       ar: {
         type: String,
-        trim: true,
+        required: true,
         min: 3,
       },
     },
@@ -18,12 +19,12 @@ const serviceSchema = new Schema(
     description: {
       en: {
         type: String,
-        trim: true,
+        required: true,
         min: 3,
       },
       ar: {
         type: String,
-        trim: true,
+        required: true,
         min: 3,
       },
     },
@@ -33,24 +34,24 @@ const serviceSchema = new Schema(
         title: {
           en: {
             type: String,
-            trim: true,
+            required: true,
             min: 3,
           },
           ar: {
             type: String,
-            trim: true,
+            required: true,
             min: 3,
           },
         },
         content: {
           en: {
             type: String,
-            trim: true,
+            required: true,
             min: 3,
           },
           ar: {
             type: String,
-            trim: true,
+            required: true,
             min: 3,
           },
         },

@@ -2,27 +2,24 @@ import { serviceModel } from "../../../Database/models/Services.model.js";
 import { AppError } from "../../utils/AppError.js";
 import { catchError } from "../../utils/catchError.js";
 import * as handler from "../controllersHandler.js";
+import { addContentSchema } from "./serviceValidation.js";
 
 // Add service
 const addService = catchError(async (req, res, next) => {
-  const { title, description } = req.body;
-
-  if (!req.body.imageCover) {
-    return next(new AppError("Please provide valid image", 400));
+  const { error } = addContentSchema.validate(req.body);
+  if (error) {
+    return next(new AppError(error.details[0].message, 400));
+  }
+  if (!req.body.title) {
+    return next(new AppError("Title is required", 400));
+  }
+  if (!req.body.description) {
+    return next(new AppError("Description is required", 400));
+  }
+  if (!req.file) {
+    return next(new AppError("No file uploaded", 400));
   }
   req.body.imageCover = req.file.filename;
-
-  // if (!title || (!title.en && !title.ar)) {
-  //   return next(
-  //     new AppError("Please provide a title in English or Arabic", 400)
-  //   );
-  // }
-
-  // if (!description || (!description.en && !description.ar)) {
-  //   return next(
-  //     new AppError("Please provide a description in English or Arabic", 400)
-  //   );
-  // }
 
   const service = new serviceModel(req.body);
   if (!service) {

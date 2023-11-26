@@ -29,16 +29,16 @@ appointmentRouter
 appointmentRouter
   .route("/cancel/:appointmentId")
   .post(
-    protectedRoutes,
     validate(modifyAppointmentSchema),
+    protectedRoutes,
     appointment.cancelAppointment
   );
 
 appointmentRouter
   .route("/complete/:appointmentId")
   .post(
-    protectedRoutes,
     validate(modifyAppointmentSchema),
+    protectedRoutes,
     appointment.completeAppointment
   );
 

@@ -29,7 +29,7 @@ const doctorSchema = new Schema(
 
     phone: { type: String },
 
-    gender: { type: String, required: true, enum: ["male", "female"] },
+    gender: { type: String, enum: ["male", "female"] },
 
     isActive: { type: Boolean, default: "false" },
 

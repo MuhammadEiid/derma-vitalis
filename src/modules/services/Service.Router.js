@@ -8,6 +8,7 @@ import {
 } from "../Authentication/authController.js";
 import { uploadSingleFile } from "../../File Upload/multer.js";
 import { checkID } from "../user/userValidation.js";
+import { addContentSchema } from "./serviceValidation.js";
 
 const serviceRouter = express.Router();
 
@@ -16,6 +17,7 @@ serviceRouter
   .post(
     protectedRoutes,
     allowedTo("admin"),
+    validate(addContentSchema),
     uploadSingleFile("imageCover", "services"),
     service.addService
   )

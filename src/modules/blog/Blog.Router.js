@@ -7,6 +7,7 @@ import {
 import { uploadSingleFile } from "../../File Upload/multer.js";
 import { validate } from "../../middleware/validate.js";
 import { checkID } from "../user/userValidation.js";
+import { addContentSchema } from "./blogValidation.js";
 
 const blogRouter = express.Router();
 
@@ -14,7 +15,8 @@ blogRouter
   .route("/")
   .post(
     protectedRoutes,
-    allowedTo("doctor"),
+    allowedTo("doctor", "admin"),
+    validate(addContentSchema),
     uploadSingleFile("imageCover", "blogs"),
     blog.addBlog
   )
@@ -25,7 +27,7 @@ blogRouter
   .put(
     validate(checkID),
     protectedRoutes,
-    allowedTo("doctor"),
+    allowedTo("doctor", "admin"),
     uploadSingleFile("imageCover", "blogs"),
     blog.updateBlog
   )

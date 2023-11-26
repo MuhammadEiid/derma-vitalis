@@ -3,6 +3,9 @@ import { doctorModel } from "../../../Database/models/Doctor.model.js";
 import { userModel } from "../../../Database/models/User.model.js";
 import { AppError } from "../../utils/AppError.js";
 import { catchError } from "../../utils/catchError.js";
+import { cancelAppointmentEmail } from "../../utils/nodemailer/cancelAppointmentMail.js";
+import { completeAppointmentEmail } from "../../utils/nodemailer/completeAppointment.js";
+import { sendEmail } from "../../utils/nodemailer/sendEmail.js";
 
 const getDoctorAvailableSlots = catchError(async (req, res, next) => {
   const { doctorId } = req.params;
@@ -94,6 +97,16 @@ const makeAppointment = catchError(async (req, res, next) => {
     status: appointment.status,
   });
 
+  const patientEmail = patient.email;
+  const patientName = patient.name.en || patient.name.ar;
+  const doctorName = doctor.name.en || doctor.name.ar;
+
+  await sendEmail({
+    to: patientEmail,
+    subject: "Appointment Confirmation",
+    html: appointmentMail(patientName, doctorName, day, startTime, endTime),
+  });
+
   await Promise.all([doctor.save(), appointment.save(), patient.save()]);
 
   res.status(200).json({ message: successMessage });
@@ -113,31 +126,35 @@ const cancelAppointment = catchError(async (req, res, next) => {
   if (appointment.status === "Cancelled") {
     return res.status(200).json({ message: "Appointment Already Cancelled" });
   }
+
   // Update the appointment status to "Cancelled"
   appointment.status = "Cancelled";
   await appointment.save();
 
   // Remove the appointment from doctorAppointments
   const doctor = await doctorModel.findById(appointment.doctor);
-  if (doctor) {
-    // Find the specific schedule for the appointment
-    const appointmentScheduleIndex = doctor.availableSchedule.findIndex(
-      (schedule) =>
-        schedule.day.toISOString().split("T")[0] ===
-          appointment.appointmentSchedule.day &&
-        schedule.startTime === appointment.appointmentSchedule.startTime &&
-        schedule.endTime === appointment.appointmentSchedule.endTime
-    );
 
-    // Remove the schedule from the availableSchedule array
-    doctor.availableSchedule.splice(appointmentScheduleIndex, 1);
-
-    // Add the appointment to doctor's appointment history with "Cancelled" status
-    doctor.appointments.push({
-      _id: appointment._id,
-      status: appointment.status,
-    });
+  if (!doctor) {
+    return next(new AppError("Doctor not found", 404));
   }
+  // Find the specific schedule for the appointment
+  const appointmentScheduleIndex = doctor.availableSchedule.findIndex(
+    (schedule) =>
+      schedule.day.toISOString().split("T")[0] ===
+        appointment.appointmentSchedule.day &&
+      schedule.startTime === appointment.appointmentSchedule.startTime &&
+      schedule.endTime === appointment.appointmentSchedule.endTime
+  );
+
+  // Remove the schedule from the availableSchedule array
+  doctor.availableSchedule.splice(appointmentScheduleIndex, 1);
+
+  // Add the appointment to doctor's appointment history with "Cancelled" status
+  doctor.appointments.push({
+    _id: appointment._id,
+    status: appointment.status,
+  });
+
   await doctor.save();
 
   const patient = await userModel.findById({ _id: appointment.patient });
@@ -146,8 +163,7 @@ const cancelAppointment = catchError(async (req, res, next) => {
     return next(new AppError("Patient not found", 404));
   }
 
-  // update the appointment status inside the user document
-
+  // Update the appointment status inside the user document
   const appointmentIndex = patient.appointments.findIndex(
     (appt) => appt._id.toString() === appointmentId.toString()
   );
@@ -156,6 +172,17 @@ const cancelAppointment = catchError(async (req, res, next) => {
     patient.appointments[appointmentIndex].status = appointment.status;
     await patient.save();
   }
+
+  // Send cancellation email
+  const patientEmail = patient.email;
+  const patientName = patient.name.en || patient.name.ar;
+  const doctorName = doctor.name.en || doctor.name.ar;
+
+  await sendEmail({
+    to: patientEmail,
+    subject: "Appointment Cancelled",
+    html: cancelAppointmentEmail(patientName, doctorName),
+  });
 
   return res.status(200).json({ message: "Appointment Cancelled" });
 });
@@ -223,6 +250,17 @@ const completeAppointment = catchError(async (req, res, next) => {
     patient.appointments[appointmentIndex].status = appointment.status;
     await patient.save();
   }
+
+  // Send cancellation email
+  const patientEmail = patient.email;
+  const patientName = patient.name.en || patient.name.ar;
+  const doctorName = doctor.name.en || doctor.name.ar;
+
+  await sendEmail({
+    to: patientEmail,
+    subject: "Appointment Completed",
+    html: completeAppointmentEmail(patientName, doctorName),
+  });
 
   return res.status(200).json({ message: "Appointment Completed" });
 });

@@ -6,8 +6,10 @@ import { verifyHTML } from "../../utils/nodemailer/verifyHTML.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { sendEmail } from "../../utils/nodemailer/sendEmail.js";
-import { customAlphabet } from "nanoid";
-
+import { customAlphabet, nanoid } from "nanoid";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import passport from "passport";
+import { resetPasswordHTML } from "../../utils/nodemailer/resetPwHTML.js";
 // ----------------------------------------------------------- //
 const signup = catchError(async (req, res, next) => {
   const { name, email, password, repeat_password, phone, gender } = req.body;
@@ -61,7 +63,63 @@ const signup = catchError(async (req, res, next) => {
     newUser,
   });
 });
+// ----------------------------------------------------------- //
+const login = catchError(async (req, res, next) => {
+  const { email, password } = req.body;
 
+  let user = await doctorModel.findOne({ email: email.toLowerCase() });
+
+  if (!user) {
+    user = await userModel.findOne({ email: email.toLowerCase() });
+  }
+
+  if (!user) {
+    return next(new AppError("User not found", 404));
+  }
+
+  if (!user.verified) {
+    return next(
+      new AppError("User not verified, please check your email", 401)
+    );
+  }
+
+  const match = bcrypt.compareSync(password, user.password);
+  if (!match) {
+    return next(new AppError("Incorrect password"), 401);
+  }
+
+  let token = jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    },
+    process.env.LOGIN_TOKEN,
+    {
+      expiresIn: "1h",
+    }
+  );
+
+  let refreshToken = jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    },
+    process.env.LOGIN_TOKEN,
+    {
+      expiresIn: "365d",
+    }
+  );
+
+  if (user instanceof doctorModel) {
+    await doctorModel.findByIdAndUpdate({ _id: user.id }, { isActive: true });
+  } else if (user instanceof userModel) {
+    await userModel.findByIdAndUpdate({ _id: user.id }, { isActive: true });
+  }
+
+  res.status(201).json({ message: "Welcome", token, refreshToken });
+});
 // ----------------------------------------------------------- //
 const activateAccount = catchError(async (req, res, next) => {
   const { token } = req.params;
@@ -187,8 +245,8 @@ const newConfirmEmail = catchError(async (req, res, next) => {
 });
 
 // ----------------------------------------------------------- //
-const login = catchError(async (req, res, next) => {
-  const { email, password } = req.body;
+const forgetPassword = catchError(async (req, res, next) => {
+  const { email } = req.body;
 
   let user = await doctorModel.findOne({ email: email.toLowerCase() });
 
@@ -199,164 +257,250 @@ const login = catchError(async (req, res, next) => {
   if (!user) {
     return next(new AppError("User not found", 404));
   }
-
-  if (!user.verified) {
-    return next(
-      new AppError("User not verified, please check your email", 401)
-    );
-  }
-
-  const match = bcrypt.compareSync(password, user.password);
-  if (!match) {
-    return next(new AppError("Incorrect password"), 401);
-  }
-
+  const code = nanoid();
+  const hashedCode = bcrypt.hashSync(code, parseInt(process.env.SALT));
   let token = jwt.sign(
     {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      name: user.name,
-      gender: user.gender,
-      phone: user.phone,
+      email,
+      sentCode: hashedCode,
     },
-    process.env.LOGIN_TOKEN,
+    process.env.RESET_TOKEN,
     {
-      expiresIn: "5h",
+      expiresIn: "1h",
     }
   );
-
-  let refreshToken = jwt.sign(
-    {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      name: user.name,
-      gender: user.gender,
-      phone: user.phone,
-    },
-    process.env.LOGIN_TOKEN,
-    {
-      expiresIn: "365d",
-    }
-  );
+  const resetPasswordLink = `${req.protocol}://${req.headers.host}/auth/reset/${token}`;
+  const userName = user.name.en || user.name.ar;
+  await sendEmail({
+    to: email,
+    subject: "Reset Password",
+    html: resetPasswordHTML(userName, resetPasswordLink),
+  });
 
   if (user instanceof doctorModel) {
-    await doctorModel.findByIdAndUpdate({ _id: user.id }, { isActive: true });
+    await doctorModel.findOneAndUpdate(
+      { email },
+      {
+        forgetCode: hashedCode,
+      },
+      {
+        new: true,
+      }
+    );
   } else if (user instanceof userModel) {
-    await userModel.findByIdAndUpdate({ _id: user.id }, { isActive: true });
+    await userModel.findOneAndUpdate(
+      { email },
+      {
+        forgetCode: hashedCode,
+      },
+      {
+        new: true,
+      }
+    );
   }
 
-  res.status(201).json({ message: "Welcome", token, refreshToken });
+  res.status(200).json({ message: "Done", user });
 });
 
-// ---------------------------------------------------------- //
-// --------------------- Social Login ----------------------- //
-export const loginWithGmail = async (req, res, next) => {
-  const { idToken } = req.body;
-  const client = new OAuth2Client();
-  async function verify() {
-    const ticket = await client.verifyIdToken({
-      idToken,
-      audience: process.env.CLIENT_ID,
+//================================ reset password =================================
+const resetPassword = catchError(async (req, res, next) => {
+  const { token } = req.params;
+  const { newPassword } = req.body;
+
+  jwt.verify(token, process.env.RESET_TOKEN, async (err, decoded) => {
+    if (err) {
+      if (err.name === "TokenExpiredError") {
+        return next(new AppError("Token has expired", 401));
+      }
+      return next(new AppError("Invalid token", 400));
+    } else {
+      const email = decoded.email;
+      if (!email) {
+        return next(new AppError("Invalid Token", 400));
+      }
+
+      let user = await doctorModel.findOne({
+        email: decoded?.email.toLowerCase(),
+        forgetCode: decoded?.sentCode,
+      });
+
+      if (!user) {
+        user = await userModel.findOne({
+          email: decoded?.email.toLowerCase(),
+          forgetCode: decoded?.sentCode,
+        });
+      }
+
+      if (!user) {
+        return next(new AppError("Password already reset, try to login", 400));
+      }
+
+      user.password = newPassword;
+      user.forgetCode = null;
+      user.isActive = false;
+
+      const resetedPassData = await user.save();
+      res.status(200).json({ message: "Success", user: resetedPassData });
+    }
+  });
+});
+
+// --------------------- Gmail Login/Signup ----------------------- //
+// Configure Passport.js with Google strategy
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID:
+        "830222166488-8a6ucqcahne2ss6l6vi16vu3360dch6p.apps.googleusercontent.com",
+      clientSecret: "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",
+      callbackURL: "http://localhost:3000/auth/google/callback", // Replace with your callback URL
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        // Retrieve user details from the profile object
+        const { id, emails, photos, displayName } = profile;
+
+        // Check if the email is verified
+        const email_verified = profile.emails[0].verified;
+        if (!email_verified) {
+          return done(new AppError("Email is not verified", 400));
+        }
+
+        // Find the user in the database based on the email
+        let user = await doctorModel.findOne({
+          email: emails[0].value.toLowerCase(),
+        });
+
+        if (!user) {
+          user = await userModel.findOne({
+            email: emails[0].value.toLowerCase(),
+          });
+        }
+
+        if (user) {
+          // Generate tokens for the user
+          const token = jwt.sign(
+            {
+              id: user.id,
+              email: user.email,
+              role: user.role,
+            },
+            process.env.LOGIN_TOKEN,
+            {
+              expiresIn: "5h",
+            }
+          );
+
+          const refreshToken = jwt.sign(
+            {
+              id: user.id,
+              email: user.email,
+              role: user.role,
+            },
+            process.env.LOGIN_TOKEN,
+            {
+              expiresIn: "365d",
+            }
+          );
+
+          // Update isActive field for the user
+          if (user instanceof doctorModel) {
+            await doctorModel.findByIdAndUpdate(
+              { _id: user.id },
+              { isActive: true }
+            );
+          } else if (user instanceof userModel) {
+            await userModel.findByIdAndUpdate(
+              { _id: user.id },
+              { isActive: true }
+            );
+          }
+
+          return done(null, { token, refreshToken });
+        }
+
+        const customPassword = customAlphabet(
+          "12345678!_=abcdefghm.,rqwpoi*",
+          8
+        );
+
+        // Sign up user if user is not found
+        const newUser = await userModel.create({
+          email: emails[0].value.toLowerCase(),
+          name: {
+            en: displayName,
+          },
+          password: customPassword(8),
+          profilePic: photos[0].value,
+          provider: "Google",
+          verified: true,
+          isActive: true,
+          isCustomPassword: true,
+        });
+
+        const token = jwt.sign(
+          {
+            id: newUser.id,
+            email: newUser.email,
+            role: newUser.role,
+          },
+          process.env.LOGIN_TOKEN,
+          {
+            expiresIn: "5h",
+          }
+        );
+
+        const refreshToken = jwt.sign(
+          {
+            id: newUser.id,
+            email: newUser.email,
+            role: newUser.role,
+          },
+          process.env.LOGIN_TOKEN,
+          {
+            expiresIn: "365d",
+          }
+        );
+
+        await newUser.save();
+
+        return done(null, { token, refreshToken });
+      } catch (error) {
+        // Pass the error to the next middleware (error handling)
+        return done(error);
+      }
+    }
+  )
+);
+
+// Route handler for Google login
+const loginWithGmail = (req, res, next) => {
+  passport.authenticate("google", { scope: ["profile", "email"] })(
+    req,
+    res,
+    next
+  );
+};
+
+// Callback route handler after Google authentication
+const loginWithGmailCallback = (req, res, next) => {
+  passport.authenticate("google", { session: false }, (err, user) => {
+    if (err) {
+      return next(err);
+    }
+
+    if (!user) {
+      return res.status(401).json({
+        message: "Authentication failed",
+      });
+    }
+
+    return res.status(201).json({
+      message: "Signed in successfully.",
+      token: user.token,
+      refreshToken: user.refreshToken,
     });
-    const payload = ticket.getPayload();
-    return payload;
-  }
-  const { email_verified, email, picture, name } = await verify();
-
-  if (!email_verified) {
-    return next(new AppError("Email is not verified", 400));
-  }
-
-  let user = await doctorModel.findOne({ email: email.toLowerCase() });
-
-  if (!user) {
-    user = await userModel.findOne({ email: email.toLowerCase() });
-  }
-
-  if (user) {
-    if (user.provider !== "Google") {
-      return next(new AppError("Invalid email provider", 400));
-    }
-
-    let token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
-      process.env.LOGIN_TOKEN,
-      {
-        expiresIn: "5h",
-      }
-    );
-
-    let refreshToken = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
-      process.env.LOGIN_TOKEN,
-      {
-        expiresIn: "365d",
-      }
-    );
-
-    if (user instanceof doctorModel) {
-      await doctorModel.findByIdAndUpdate({ _id: user.id }, { isActive: true });
-    } else if (user instanceof userModel) {
-      await userModel.findByIdAndUpdate({ _id: user.id }, { isActive: true });
-    }
-
-    res.status(201).json({ message: "Welcome", token, refreshToken });
-  }
-
-  const customPassword = customAlphabet("12345678!_=abcdefghm.,rqwpoi*", 8);
-
-  //Sign up user if user is not found
-  const newUser = await userModel.create({
-    email,
-    name,
-    password: customPassword(8),
-    profilePic: picture,
-    provider: "Google",
-    verified: true,
-    isActive: true,
-  });
-
-  let token = jwt.sign(
-    {
-      id: newUser.id,
-      email: newUser.email,
-      role: newUser.role,
-    },
-    process.env.LOGIN_TOKEN,
-    {
-      expiresIn: "5h",
-    }
-  );
-
-  let refreshToken = jwt.sign(
-    {
-      id: newUser.id,
-      email: newUser.email,
-      role: newUser.role,
-    },
-    process.env.LOGIN_TOKEN,
-    {
-      expiresIn: "365d",
-    }
-  );
-
-  await newUser.save();
-
-  return res.status(201).json({
-    message: "Signed up successfully.",
-    token,
-    refreshToken,
-  });
+  })(req, res, next);
 };
 
 // ----------------------------------------------------------- //
@@ -426,4 +570,8 @@ export {
   login,
   activateAccount,
   newConfirmEmail,
+  loginWithGmail,
+  loginWithGmailCallback,
+  forgetPassword,
+  resetPassword,
 };

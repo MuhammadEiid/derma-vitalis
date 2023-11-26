@@ -26,7 +26,7 @@ const userSchema = new Schema(
       lowercase: true,
     },
     password: { type: String, min: 5, max: 30, required: true },
-    gender: { type: String, required: true, enum: ["male", "female"] },
+    gender: { type: String, enum: ["male", "female"] },
     phone: { type: String },
     DOB: { type: Date },
 
@@ -96,7 +96,7 @@ const userSchema = new Schema(
     provider: {
       type: String,
       default: "System",
-      enum: ["Google", "Facebook", "Apple", "System"],
+      enum: ["Google", "Apple", "System"],
       required: true,
     },
     contactForm: [
@@ -105,12 +105,17 @@ const userSchema = new Schema(
         ref: "contact",
       },
     ],
+    isCustomPassword: {
+      type: Boolean,
+      default: false,
+    },
+    forgetCode: String,
   },
   { timestamps: true }
 );
 
 userSchema.pre("save", function (next) {
-  if (!this.isModified("password")) {
+  if (!this.isModified("password") || this.isCustomPassword) {
     return next(); // Skip hashing if password is not modified
   }
   // Hash doctor Password in adding doctor

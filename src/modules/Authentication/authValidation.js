@@ -23,7 +23,7 @@ const registerSchema = Joi.object({
     minDomainSegments: 2,
     tlds: { allow: ["com", "net"] },
   }),
-  gender: Joi.string().valid("male", "female").required(),
+  gender: Joi.string().valid("male", "female"),
   phone: Joi.string()
     .length(11)
     .pattern(/^[0-9]+$/)

@@ -10,13 +10,13 @@ const logout = handler.logout(userModel, "Patient");
 const changePassword = handler.changePassword(userModel, "Patient");
 
 const toggleLikeDislikeBlog = catchError(async (req, res, next) => {
-  const { blogId } = req.params;
+  const { id } = req.params;
 
-  if (req.user.likedBlogs.includes(blogId)) {
+  if (req.user.likedBlogs.includes(id)) {
     // If the user has already liked the blog, remove the like
     await userModel.findByIdAndUpdate(
       req.user._id,
-      { $pull: { likedBlogs: blogId } },
+      { $pull: { likedBlogs: id } },
       { new: true }
     );
 
@@ -25,7 +25,7 @@ const toggleLikeDislikeBlog = catchError(async (req, res, next) => {
     // If the user hasn't liked the blog, like it
     await userModel.findByIdAndUpdate(
       req.user._id,
-      { $push: { likedBlogs: blogId } },
+      { $push: { likedBlogs: id } },
       { new: true }
     );
 
@@ -34,13 +34,13 @@ const toggleLikeDislikeBlog = catchError(async (req, res, next) => {
 });
 
 const toggleSaveUnsaveBlog = catchError(async (req, res, next) => {
-  const { blogId } = req.params;
+  const { id } = req.params;
 
-  if (req.user.savedBlogs.includes(blogId)) {
+  if (req.user.savedBlogs.includes(id)) {
     // If the user has already saved the blog, unsave it
     await userModel.findByIdAndUpdate(
       req.user._id,
-      { $pull: { savedBlogs: blogId } },
+      { $pull: { savedBlogs: id } },
       { new: true }
     );
 
@@ -49,7 +49,7 @@ const toggleSaveUnsaveBlog = catchError(async (req, res, next) => {
     // If the user hasn't saved the blog, save it
     await userModel.findByIdAndUpdate(
       req.user._id,
-      { $push: { savedBlogs: blogId } },
+      { $push: { savedBlogs: id } },
       { new: true }
     );
 

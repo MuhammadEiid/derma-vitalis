@@ -3,14 +3,24 @@ import { doctorModel } from "../../../Database/models/Doctor.model.js";
 import { AppError } from "../../utils/AppError.js";
 import { catchError } from "../../utils/catchError.js";
 import * as handler from "../controllersHandler.js";
+import { addContentSchema } from "./blogValidation.js";
 
 // Add blog
 const addBlog = catchError(async (req, res, next) => {
-  const { title, description } = req.body;
-
-  if (req.file) {
-    req.body.imageCover = req.file.filename;
+  const { error } = addContentSchema.validate(req.body);
+  if (error) {
+    return next(new AppError(error.details[0].message, 400));
   }
+  if (!req.body.title) {
+    return next(new AppError("Title is required", 400));
+  }
+  if (!req.body.description) {
+    return next(new AppError("Description is required", 400));
+  }
+  if (!req.file) {
+    return next(new AppError("No file uploaded", 400));
+  }
+  req.body.imageCover = req.file.filename;
 
   const blog = new blogModel({
     ...req.body,
