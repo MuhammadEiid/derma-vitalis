@@ -8,7 +8,34 @@ import { catchError } from "../../utils/catchError.js";
 import * as handler from "../controllersHandler.js";
 
 // Add Doctor or Patient or Admin
-const addAdmin = handler.addOne(userModel, "Admin", "admin");
+const addAdmin = catchError(async (req, res, next) => {
+  let email = req.body.email;
+
+  const emailExists = await userModel.findOne({ email });
+  if (emailExists) {
+    return next(new AppError("This email already exists", 400));
+  }
+  // If User Added Profile Picture
+  if (req.file) {
+    req.body.profilePic = req.file.profilePic;
+  }
+
+  req.body.role = "admin";
+  req.body.verified = true;
+
+  const document = new userModel({
+    ...req.body,
+    createdBy: req.user._id,
+  });
+
+  let response = {};
+  response = document;
+  await document.save();
+  res.status(200).json({
+    message: `Admin Added Successfully`,
+  });
+});
+
 const getAllAdmins = handler.getAll(userModel, "Admins", "admin");
 const getAdmin = handler.getOne(userModel, "Admin");
 const updateAdminProfile = handler.updateProfile(userModel, "Admin");
