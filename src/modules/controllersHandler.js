@@ -252,7 +252,7 @@ const checkEmail = (type) => {
     let response = {};
     response[type] = document;
 
-    res.status(404).json({
+    res.json({
       message: `${type} Not found`,
     });
   });
