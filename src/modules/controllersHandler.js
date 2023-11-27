@@ -50,6 +50,9 @@ const getAll = (model, type, role) => {
     if (role === "admin") {
       apiFeatures.filter().mongooseQuery.find({ role: "admin" });
     }
+    if (role === "user") {
+      apiFeatures.filter().mongooseQuery.find({ role: "user" });
+    }
 
     const document = await apiFeatures.mongooseQuery;
 
