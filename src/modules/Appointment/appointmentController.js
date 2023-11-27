@@ -3,6 +3,7 @@ import { doctorModel } from "../../../Database/models/Doctor.model.js";
 import { userModel } from "../../../Database/models/User.model.js";
 import { AppError } from "../../utils/AppError.js";
 import { catchError } from "../../utils/catchError.js";
+import { appointmentMail } from "../../utils/nodemailer/appointmentMail.js";
 import { cancelAppointmentEmail } from "../../utils/nodemailer/cancelAppointmentMail.js";
 import { completeAppointmentEmail } from "../../utils/nodemailer/completeAppointment.js";
 import { sendEmail } from "../../utils/nodemailer/sendEmail.js";
