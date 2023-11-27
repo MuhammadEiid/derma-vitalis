@@ -247,12 +247,12 @@ const checkEmail = (type) => {
     }
 
     if (document) {
-      return next(new AppError(`${type} already exists`, 404));
+      return next(new AppError(`${type} already exists`, 200));
     }
     let response = {};
     response[type] = document;
 
-    res.status(200).json({
+    res.status(404).json({
       message: `${type} Not found`,
     });
   });
