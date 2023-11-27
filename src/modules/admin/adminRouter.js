@@ -70,6 +70,7 @@ adminRouter.get(
   protectedRoutes,
   admin.getUser
 );
+adminRouter.get("/checkEmail", admin.checkEmail);
 
 adminRouter.get(
   "/profile",

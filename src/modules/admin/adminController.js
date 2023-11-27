@@ -28,6 +28,7 @@ const deleteUser = handler.deleteUser(userModel, "User");
 const getAllUsers = handler.getAll(userModel, "Users", "user");
 const getUser = handler.getOne(userModel, "User");
 const changeUserPassword = handler.changeUserPasword(userModel, "User");
+const checkEmail = handler.checkEmail("User");
 
 // Reviews
 const deleteReview = catchError(async (req, res, next) => {
@@ -122,4 +123,5 @@ export {
   deleteReview,
   getAllAppointments,
   changeRole,
+  checkEmail,
 };

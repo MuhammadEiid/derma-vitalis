@@ -18,7 +18,7 @@ const changePasswordToOthers = Joi.object({
 const nameSchema = Joi.object({
   en: Joi.string(),
   ar: Joi.string(),
-}).or("en", "ar");
+});
 
 const addUser = Joi.object({
   name: nameSchema.required(),

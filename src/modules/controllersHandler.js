@@ -2,11 +2,12 @@ import { AppError } from "../utils/AppError.js";
 import { catchError } from "../utils/catchError.js";
 import { APIFeatures } from "../utils/APIFeature.js";
 import bcrypt from "bcrypt";
+import { userModel } from "../../Database/models/User.model.js";
+import { doctorModel } from "../../Database/models/Doctor.model.js";
 
 // Add User or Admin or Doctor
 const addOne = (model, type, role) => {
   return catchError(async (req, res, next) => {
-    const { name } = req.body;
     let email = req.body.email;
 
     const emailExists = await model.findOne({ email });
@@ -235,6 +236,28 @@ const getOne = (model, type) => {
     }
   });
 };
+const checkEmail = (type) => {
+  return catchError(async (req, res, next) => {
+    const { email } = req.body;
+
+    let document = await userModel.findOne({ email: email.toLowerCase() });
+
+    if (!document) {
+      document = await doctorModel.findOne({ email: email.toLowerCase() });
+    }
+
+    if (document) {
+      return next(new AppError(`${type} already exists`, 404));
+    }
+    let response = {};
+    response[type] = document;
+
+    res.status(200).json({
+      message: `${type} Not found`,
+    });
+  });
+};
+
 const getUserProfile = (model, type) => {
   return catchError(async (req, res, next) => {
     let document = await model.findById(req.user._id);
@@ -285,4 +308,5 @@ export {
   logout,
   getUserProfile,
   getUserSpecificItem,
+  checkEmail,
 };
