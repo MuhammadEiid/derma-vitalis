@@ -60,7 +60,6 @@ const signup = catchError(async (req, res, next) => {
   return res.status(201).json({
     message:
       "User Registered Successfully, Please Check your mailbox to verify your account",
-    newUser,
   });
 });
 // ----------------------------------------------------------- //
@@ -299,7 +298,7 @@ const forgetPassword = catchError(async (req, res, next) => {
     );
   }
 
-  res.status(200).json({ message: "Done", user });
+  res.status(200).json({ message: "Forget mail has been sent" });
 });
 
 //================================ reset password =================================
@@ -340,7 +339,9 @@ const resetPassword = catchError(async (req, res, next) => {
       user.isActive = false;
 
       const resetedPassData = await user.save();
-      res.status(200).json({ message: "Success", user: resetedPassData });
+      res.status(200).json({
+        message: "Password Reset Successfully",
+      });
     }
   });
 });

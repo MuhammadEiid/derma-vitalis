@@ -66,8 +66,8 @@ export const verifyHTML = (link, refreshLink) => {
               </p>
           </div>
           <div class="verification-buttons">
-              <a href="{link}">Verify Email</a>
-              <a href="{refreshLink}">Request New Email</a>
+              <a href="${link}">Verify Email</a>
+              <a href="${refreshLink}">Request New Email</a>
           </div>
       </div>
   </body>
