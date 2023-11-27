@@ -1,4 +1,6 @@
+import { appointmentModel } from "../../../Database/models/Appointment.model.js";
 import { userModel } from "../../../Database/models/User.model.js";
+import { APIFeatures } from "../../utils/APIFeature.js";
 import { AppError } from "../../utils/AppError.js";
 import { catchError } from "../../utils/catchError.js";
 import * as handler from "../controllersHandler.js";
@@ -56,6 +58,37 @@ const toggleSaveUnsaveBlog = catchError(async (req, res, next) => {
     res.status(200).json({ message: "Blog saved successfully" });
   }
 });
+
+const getSavedBlogs = handler.getUserSpecificItem(userModel, "savedBlogs");
+
+const getLikedBlogs = handler.getUserSpecificItem(userModel, "likedBlogs");
+
+const getUserAppointments = catchError(async (req, res, next) => {
+  let apiFeatures = new APIFeatures(
+    appointmentModel
+      .find({ patient: req.user.id })
+      .populate("doctor", "name -_id"),
+    req.query
+  ).pagination();
+
+  const document = await apiFeatures.mongooseQuery;
+
+  if (document.length > 0) {
+    // Extract specific data from the response
+    const responseData = document.map((appointment) => ({
+      doctor: appointment.doctor,
+      appointmentSchedule: appointment.appointmentSchedule,
+    }));
+
+    res.status(200).json({
+      page: apiFeatures.page,
+      response: responseData,
+    });
+  } else {
+    next(new AppError(`No Appointments Found`, 404));
+  }
+});
+
 export {
   toggleLikeDislikeBlog,
   toggleSaveUnsaveBlog,
@@ -63,4 +96,7 @@ export {
   logout,
   updatePatient,
   getUserProfile,
+  getSavedBlogs,
+  getLikedBlogs,
+  getUserAppointments,
 };

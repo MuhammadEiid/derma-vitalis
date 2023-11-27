@@ -142,8 +142,8 @@ userSchema.post("init", function () {
   }
 });
 
-userSchema.pre(/^find/, function () {
-  this.populate("contactForm", "message -_id");
-});
+// userSchema.pre(/^find/, function () {
+//   this.populate("contactForm", "message -_id");
+// });
 
 export const userModel = mongoose.models.user || model("user", userSchema);

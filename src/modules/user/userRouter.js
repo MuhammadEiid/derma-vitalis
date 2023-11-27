@@ -10,6 +10,12 @@ import { uploadSingleFile } from "../../File Upload/multer.js";
 
 const userRouter = express.Router();
 
+userRouter.route("/savedBlogs").get(protectedRoutes, user.getSavedBlogs);
+userRouter.route("/likedBlogs").get(protectedRoutes, user.getLikedBlogs);
+userRouter
+  .route("/appointments")
+  .get(protectedRoutes, user.getUserAppointments);
+
 userRouter
   .route("/")
   .put(

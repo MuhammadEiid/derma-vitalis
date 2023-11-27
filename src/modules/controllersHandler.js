@@ -67,6 +67,29 @@ const getAll = (model, type, role) => {
   });
 };
 
+const getUserSpecificItem = (model, param) => {
+  return catchError(async (req, res, next) => {
+    let apiFeatures = new APIFeatures(
+      model.find({ _id: req.user.id }).select(`${param}`).populate(`${param}`),
+      req.query
+    ).pagination();
+
+    const document = await apiFeatures.mongooseQuery;
+
+    let response = {};
+    response = document;
+
+    if (document.length > 0) {
+      res.status(200).json({
+        page: apiFeatures.page,
+        response,
+      });
+    } else {
+      next(new AppError(`Not Found`, 404));
+    }
+  });
+};
+
 // Update User or Admin or Doctor Profile
 const updateProfile = (model, type) => {
   return catchError(async (req, res, next) => {
@@ -261,4 +284,5 @@ export {
   deleteUser,
   logout,
   getUserProfile,
+  getUserSpecificItem,
 };
