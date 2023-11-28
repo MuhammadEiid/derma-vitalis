@@ -2,6 +2,11 @@ import { galleryModel } from "../../../Database/models/Gallery.model.js";
 import { AppError } from "../../utils/AppError.js";
 import { catchError } from "../../utils/catchError.js";
 import * as handler from "../controllersHandler.js";
+import { promisify } from "util";
+import fs from "fs";
+
+// Function to promisify fs.unlink
+const unlinkAsync = promisify(fs.unlink);
 
 // Add images
 const addImages = catchError(async (req, res, next) => {
@@ -85,19 +90,64 @@ const getAllGallery = handler.getAll(galleryModel, "Gallery");
 
 // Delete all images
 const deleteAllImages = catchError(async (req, res, next) => {
-  await galleryModel.findOneAndUpdate({}, { $set: { images: [] } });
-  return res.status(200).json({ message: "Images has been cleared" });
-});
+  const gallery = await galleryModel.findOne({});
 
+  if (!gallery) {
+    return next(new AppError("Something went wrong!", 404));
+  }
+
+  // Extract all image filenames
+  const imageFilenames = gallery.images.map((image) =>
+    image.image.replace(process.env.BaseURL + "gallery/", "")
+  );
+
+  // Update the database to clear images
+  await galleryModel.findOneAndUpdate({}, { $set: { images: [] } });
+
+  // Delete all image files
+  imageFilenames.forEach((filename) => {
+    unlinkAsync(`uploads/gallery/${filename}`)
+      .then(() => {})
+      .catch((err) => {
+        console.error("Error deleting file:", err);
+        return next(new AppError("Error deleting file", 500));
+      });
+  });
+
+  return res.status(200).json({ message: "Images have been cleared" });
+});
 // Delete all videos
 const deleteAllVideos = catchError(async (req, res, next) => {
+  const gallery = await galleryModel.findOne({});
+
+  if (!gallery) {
+    return next(new AppError("Something went wrong!", 404));
+  }
+
+  const videoFilenames = gallery.videos.map((video) =>
+    video.video.replace(process.env.BaseURL + "gallery/", "")
+  );
+
   await galleryModel.findOneAndUpdate({}, { $set: { videos: [] } });
-  return res.status(200).json({ message: "Videos has been cleared" });
+
+  videoFilenames.forEach((filename) => {
+    unlinkAsync(`uploads/gallery/${filename}`)
+      .then(() => {})
+      .catch((err) => {
+        console.error("Error deleting file:", err);
+        return next(new AppError("Error deleting file", 500));
+      });
+  });
+
+  return res.status(200).json({ message: "Videos have been cleared" });
 });
 
-// Delete specific image
 const deleteImage = catchError(async (req, res, next) => {
   const { id } = req.params;
+
+  const folderName = "gallery"; // Replace with the actual folderName
+
+  // Use uploadMiddleware here for handling the request
 
   const gallery = await galleryModel.findOne({});
 
@@ -117,12 +167,26 @@ const deleteImage = catchError(async (req, res, next) => {
     { new: true }
   );
 
-  return res.status(200).json({ message: "Image Deleted Successfully" });
+  // Handle file deletion
+  const filename = image.image.replace(process.env.BaseURL + "gallery/", "");
+  unlinkAsync(`uploads/${folderName}/${filename}`, (err) => {
+    if (err) {
+      console.error("Error deleting file:", err);
+      // Pass the error to the global error handler
+      return next(new AppError("Error deleting file", 500));
+    }
+    // File deleted successfully
+    return res.status(200).json({ message: "Image Deleted Successfully" });
+  });
 });
 
 // Delete specific video
 const deleteVideo = catchError(async (req, res, next) => {
   const { id } = req.params;
+
+  const folderName = "gallery"; // Replace with the actual folderName
+
+  // Use uploadMiddleware here for handling the request
 
   const gallery = await galleryModel.findOne({});
 
@@ -136,13 +200,26 @@ const deleteVideo = catchError(async (req, res, next) => {
     return next(new AppError("Video not found", 404));
   }
 
-  const updatedGallery = await galleryModel.findOneAndUpdate(
+  // Get the filename from the video object
+  const filename = video.video.replace(process.env.BaseURL + "gallery/", "");
+
+  await galleryModel.findOneAndUpdate(
     {},
     { $pull: { videos: { _id: id } } },
     { new: true }
   );
 
-  return res.status(200).json({ message: "Video Deleted Successfully" });
+  // Delete the file from the folder
+  unlinkAsync(`uploads/${folderName}/${filename}`)
+    .then(() => {
+      // File deleted successfully
+      return res.status(200).json({ message: "Video Deleted Successfully" });
+    })
+    .catch((err) => {
+      console.error("Error deleting file:", err);
+      // Pass the error to the global error handler
+      return next(new AppError("Error deleting file", 500));
+    });
 });
 
 export {
