@@ -23,6 +23,8 @@
 - Morgan
 - Node-Schedule
 - Multer
+- File system ( fs )
+- utils
 
 ## Features ✨
 
@@ -43,6 +45,7 @@
 - [x] Forget your password including sending mail
 - [x] Update your password and profile
 - [x] Upload Profile Picture, and gallery images, videos CRUD
+- [x] file system to handle deleting images/videos from actual folders in order to manage spaces
 - [x] Email service 📨
 - [x] Contact us
 - [x] Blog CRUD Operations
